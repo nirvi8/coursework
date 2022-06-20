@@ -54,6 +54,9 @@ trips_per_day_2020 <- trips_per_day_2020 %>%
   add_predictions(model) %>%
   mutate(split = "2020")
 ```
+
+Alexandra got an RMSE of 35202 and a Rsquare value of 0.3692 which seems a bit of overfitting on the training data and it could probably be improved with lesser amount of factors with lesser powers.
+
 ```{r}
 plot_data <- trips_per_day_2020
 ggplot(plot_data, aes(x = pred, y = num_trips)) +
