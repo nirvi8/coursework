@@ -1,0 +1,60 @@
+title: "Predict Citibike"
+author: "Alexandra Roffe (Yeshiva University)"
+date: '6/17/2022'
+---
+  
+  ```{r setup, include=FALSE}
+library(scales)
+library(tidyverse)
+library(modelr)
+library(broom)
+
+theme_set(theme_bw())
+options(repr.plot.width=4, repr.plot.height=3)
+```
+
+# Write a new file called test_citibike_predictions.Rmd that loads in the 2015 trips_2015.Rdata file and weather data along with your saved model (from yesterday's .Rdata file, and predicts the number of trips for each day.
+
+```{r}
+load("trips_2015.RData")
+load("bestmodel.RData")
+
+```
+
+
+# join weather and the data 
+```{r}
+test_2015 <- full_join(trips, weather) # by "ymd"
+# add a num_trips
+test_2015 <- test_2015 %>%
+  group_by(ymd) %>%
+  mutate(num_trips = n())
+```
+
+
+```{r}
+trips_per_day = read_tsv('trips_per_day.tsv')
+library(lubridate)
+
+trips_per_day <- trips_per_day %>% 
+  mutate(day_of_week = wday(ymd)) %>%
+  mutate(weekday_or_weekend = as.integer(day_of_week > 1 & day_of_week < 7)) %>% # 1 and 7 are weekends. 
+  mutate(prcp2 = as.integer(prcp > 0.7))
+
+test_2015 <- test_2015 %>% 
+  mutate(day_of_week = wday(ymd)) %>%
+  mutate(weekday_or_weekend = as.integer(day_of_week > 1 & day_of_week < 7)) %>% # 1 and 7 are weekends. 
+  mutate(prcp2 = as.integer(prcp > 0.7))
+```
+
+# Adding holidays
+```{r}
+holidays = read_csv('holidays.csv', c('row_number', 'ymd', 'title'))
+
+trips_per_day <- left_join(trips_per_day, holidays, "ymd") %>%
+  mutate(holiday = is.na(title)) %>%
+  mutate(holiday1 = as.integer(holiday))
+
+test_2015 <- left_join(test_2015, holidays, "ymd") %>%
+  mutate(holiday = is.na(title)) %>%
+  mutate(holiday1 = as.integer(holiday))
