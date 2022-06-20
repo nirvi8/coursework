@@ -18,7 +18,7 @@ trips_per_day <- trips_per_day%>%
   mutate(weekday = ifelse(day==6|day==7, 0, 1)) %>%
   mutate(rainy = (prcp >= 0.5))
 
-holidays <- read_csv("holidays_2015-2022.csv", col_names = c('sr','ymd','name')) %>% select(ymd) %>% mutate(holiday=1)
+holidays <- read_csv("holidays.csv", col_names = c('sr','ymd','name')) %>% select(ymd) %>% mutate(holiday=1)
 
 trips_per_day <- left_join(trips_per_day, holidays, by="ymd") %>% mutate(holiday = ifelse(is.na(holiday), 0, 1))
 ```
@@ -168,3 +168,8 @@ ggplot(plot_data, aes(x = pred, y = num_trips)) +
   ylab('Actual Trips') +
   scale_y_continuous()
 ```
+
+```{r}
+save(final_model, file='trips_2015.RData')
+```
+

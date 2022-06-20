@@ -1,0 +1,72 @@
+---
+title: "test_citibike_prediction.Rmd"
+output: html_document
+date: '2022-06-17'
+---
+## Setup
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(scales)
+library(modelr)
+library(lubridate)
+library(broom)
+theme_set(theme_bw())
+options(repr.plot.width=4, repr.plot.height=3)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Data
+```{r message=FALSE, warning=FALSE}
+load('.RData')
+load('trips_2020.RData')
+```
+
+# Modify 2015 data to feed into the model
+
+```{r}
+#trips <- trips %>% select(ymd) %>% group_by(ymd) %>% summarise(num_trips = n())
+#trips_per_day_2015 <- left_join(trips, weather, by="ymd")
+
+trips_per_day_2020 <- trips_per_day_2020 %>% 
+  mutate(day_of_week = wday(ymd)) %>%
+  mutate(weekday_or_weekend = as.integer(day_of_week > 1 & day_of_week < 7)) %>% # 1 and 7 are weekends. 
+  mutate(prcp2 = as.integer(prcp > 0.7))
+
+holidays = read_csv('holidays.csv', c('row_number', 'ymd', 'title'))
+trips_per_day_2020 <- left_join(trips_per_day_2020, holidays, "ymd") %>%
+  mutate(holiday = is.na(title)) %>%
+  mutate(holiday1 = as.integer(holiday))
+
+
+
+```
+
+## Model description
+```{r}
+summary(model)
+```
+
+## Test on 2015 data
+```{r message=FALSE, warning=FALSE}
+rmse(model,trips_per_day_2020)
+rsquare(model,trips_per_day_2020)
+trips_per_day_2020 <- trips_per_day_2020 %>%
+  add_predictions(model) %>%
+  mutate(split = "2020")
+```
+```{r}
+plot_data <- trips_per_day_2020
+ggplot(plot_data, aes(x = pred, y = num_trips)) +
+  geom_point(aes(color = split)) +
+  geom_line(aes(y = pred)) +
+  xlab('Predicted number of daily trips') +
+  ylab('Actual number of daily trips') +
+  scale_y_continuous()
+ggplot(plot_data, aes(x = ymd, y = num_trips)) +
+  geom_point(aes(color = split)) +
+  geom_line(aes(y = pred)) +
+  xlab('Day of the year') +
+  ylab('Daily trips') +
+  scale_y_continuous()
+```
+
